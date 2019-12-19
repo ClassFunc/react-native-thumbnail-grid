@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Dimensions, ImageBackground, Text, TouchableOpacity, View } from 'react-native'
 import _ from 'lodash'
 import { Image } from 'react-native-expo-image-cache'
-import emptyImg from './Rolling-1s-44px.gif'
+import emptyImg from './empty-image.png'
 
 const { width } = Dimensions.get('window')
 
@@ -81,7 +81,7 @@ class PhotoGrid extends PureComponent {
               <Image
                 style={[styles.image, { width: firstImageWidth, height: firstImageHeight }, this.props.imageStyle]}
                 // source={typeof image === 'string' ? { uri: image } : image}
-                defaultSource={emptyImg}
+                defaultSource={this.props.emptyImage || emptyImg}
                 uri={typeof image === 'string' ? image : image.uri}
                 {...imageProps}
               />
@@ -120,7 +120,7 @@ class PhotoGrid extends PureComponent {
                         height: firstImageHeight
                       }, this.props.imageStyle]}
                       // source={typeof image === 'string' ? { uri: image } : image}
-                      defaultSource={emptyImg}
+                      defaultSource={this.props.emptyImage || emptyImg}
                       uri={typeof image === 'string' ? image : image.uri}
                       {...imageProps}
                     />
