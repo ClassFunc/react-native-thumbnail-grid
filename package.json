@@ -13,6 +13,7 @@
   "author": "Thanh ClassFunc",
   "license": "MIT",
   "dependencies": {
+    "expo-av": "^8.0.0",
     "react-native-expo-image-cache": "^4.1.0",
     "react-native-image-placeholder": "^1.0.14"
   },
