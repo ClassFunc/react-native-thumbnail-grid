@@ -1,13 +1,14 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
-import { View, Text, Dimensions, TouchableOpacity, ImageBackground } from 'react-native'
+import { Dimensions, ImageBackground, Text, TouchableOpacity, View } from 'react-native'
 import _ from 'lodash'
-import ImageLoad from 'react-native-image-placeholder'
+import { Image } from 'react-native-expo-image-cache'
+import emptyImg from './Rolling-1s-44px.gif'
 
 const { width } = Dimensions.get('window')
 
 class PhotoGrid extends PureComponent {
-  constructor (props) {
+  constructor(props) {
     super(props)
 
     this.state = {
@@ -18,7 +19,8 @@ class PhotoGrid extends PureComponent {
 
   static defaultProps = {
     numberImagesToShow: 0,
-    onPressImage: () => {},
+    onPressImage: () => {
+    },
   }
 
   isLastImage = (index, secondViewImages) => {
@@ -32,7 +34,7 @@ class PhotoGrid extends PureComponent {
       isLastImage: index && this.isLastImage(index, secondViewImages),
     })
 
-  render () {
+  render() {
     const { imageProps } = this.props
     const source = _.take(this.props.source, 5)
     const firstViewImages = []
@@ -75,10 +77,12 @@ class PhotoGrid extends PureComponent {
         <View style={{ flex: 1, flexDirection: direction === 'row' ? 'column' : 'row' }}>
           {firstViewImages.map((image, index) => (
             <TouchableOpacity activeOpacity={0.7} key={index} style={{ flex: 1 }}
-              onPress={event => this.handlePressImage(event, { image })}>
-              <ImageLoad
+                              onPress={event => this.handlePressImage(event, { image })}>
+              <Image
                 style={[styles.image, { width: firstImageWidth, height: firstImageHeight }, this.props.imageStyle]}
-                source={typeof image === 'string' ? { uri: image } : image}
+                // source={typeof image === 'string' ? { uri: image } : image}
+                defaultSource={emptyImg}
+                uri={typeof image === 'string' ? image : image.uri}
                 {...imageProps}
               />
             </TouchableOpacity>
@@ -86,31 +90,47 @@ class PhotoGrid extends PureComponent {
         </View>
         {
           secondViewImages.length ? (
-            <View style={{ width: secondViewWidth, height: secondViewHeight, flexDirection: direction === 'row' ? 'column' : 'row' }}>
+            <View style={{
+              width: secondViewWidth,
+              height: secondViewHeight,
+              flexDirection: direction === 'row' ? 'column' : 'row'
+            }}>
               {secondViewImages.map((image, index) => (
                 <TouchableOpacity activeOpacity={0.7} key={index} style={{ flex: 1 }}
-                onPress={event => this.handlePressImage(event, { image, index }, secondViewImages)}>
-                {this.isLastImage(index, secondViewImages) ? (
-                    <ImageBackground
-                      style={[styles.image, { width: secondImageWidth, height: secondImageHeight }, this.props.imageStyle]}
-                      source={typeof image === 'string' ? { uri: image } : image}
-                    >
-                      <View style={styles.lastWrapper}>
-                        <Text style={[styles.textCount, this.props.textStyles]}>+{this.props.numberImagesToShow || this.props.source.length - 5}</Text>
-                      </View>
-                    </ImageBackground>
-                  )
-                    : <ImageLoad
-                      style={[styles.image, { width: secondImageWidth, height: secondImageHeight }, this.props.imageStyle]}
-                      source={typeof image === 'string' ? { uri: image } : image}
+                                  onPress={event => this.handlePressImage(event, { image, index }, secondViewImages)}>
+                  {this.isLastImage(index, secondViewImages) ?
+                    (
+                      <ImageBackground
+                        style={[styles.image, {
+                          width: secondImageWidth,
+                          height: secondImageHeight
+                        }, this.props.imageStyle]}
+                        source={typeof image === 'string' ? { uri: image } : image}
+                      >
+                        <View style={styles.lastWrapper}>
+                          <Text
+                            style={[styles.textCount, this.props.textStyles]}>+{this.props.numberImagesToShow || this.props.source.length - 5}</Text>
+                        </View>
+                      </ImageBackground>
+                    )
+                    :
+                    <Image
+                      style={[styles.image, {
+                        width: firstImageWidth,
+                        height: firstImageHeight
+                      }, this.props.imageStyle]}
+                      // source={typeof image === 'string' ? { uri: image } : image}
+                      defaultSource={emptyImg}
+                      uri={typeof image === 'string' ? image : image.uri}
                       {...imageProps}
-                    />}
+                    />
+                  }
                 </TouchableOpacity>
               ))}
             </View>
           ) : null
         }
-      </View >
+      </View>
     ) : null
   }
 }

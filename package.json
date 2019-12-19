@@ -1,7 +1,7 @@
 {
-  "name": "react-native-thumbnail-grid",
-  "version": "0.3.0",
-  "description": "The photo thumbnail grid",
+  "name": "react-native-thumbnail-grid-expo",
+  "version": "1.0.0",
+  "description": "The photo thumbnail grid with image cached",
   "main": "PhotoGrid.js",
   "scripts": {
     "test": "echo \"No test specified\" && exit 0"
@@ -10,9 +10,13 @@
     "photo",
     "grid"
   ],
-  "author": "Duy Luong",
+  "author": "Thanh ClassFunc",
   "license": "MIT",
   "dependencies": {
+    "react-native-expo-image-cache": "^4.1.0",
     "react-native-image-placeholder": "^1.0.14"
+  },
+  "devDependencies": {
+    "@babel/runtime": "^7.7.7"
   }
 }
