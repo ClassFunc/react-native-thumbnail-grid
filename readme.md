@@ -59,6 +59,8 @@ style | PropTypes.object | Container styles
 imageStyle | PropTypes.object | Image styles
 imageProps | PropTypes.object | Image props
 onPressImage | PropTypes.func | Callback when press image
+emptyImage |  | default empty image load
+
 
 # Image props
 Property | Description
