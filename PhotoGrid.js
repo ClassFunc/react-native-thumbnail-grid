@@ -1,16 +1,15 @@
-import React, {PureComponent} from 'react'
+import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
-import {Dimensions, ImageBackground, Text, TouchableOpacity, View} from 'react-native'
+import { Dimensions, ImageBackground, Text, TouchableOpacity, View } from 'react-native'
 import _ from 'lodash'
-import {Image} from 'react-native-expo-image-cache'
+import { Image } from 'react-native-expo-image-cache'
 import emptyImg from './empty-image.png'
-import {Video} from "expo-av";
+import { Video } from "expo-av";
 
 const {width} = Dimensions.get('window')
 
 const isVideo = (photo) => {
   return photo.mediaType === 'video'
-      || photo.type === 'video'
       || photo.type === 'video'
 }
 
@@ -88,17 +87,18 @@ class PhotoGrid extends PureComponent {
                 {
                   isVideo(image) ?
                       <Video
-                          source={typeof image === 'string' ? {uri: image} : image}
-                          rate={1.0}
-                          volume={1.0}
-                          isMuted={true}
-                          resizeMode="cover"
-                          shouldPlay
-                          isLooping
-                          style={[styles.image, {
+                        source={typeof image === 'string' ? {uri: image} : image}
+                        rate={1.0}
+                        volume={1.0}
+                        isMuted={true}
+                        resizeMode="cover"
+                        shouldPlay
+                        isLooping
+                        style={[styles.image, {
                             width: firstImageWidth,
                             height: firstImageHeight
                           }, this.props.imageStyle]}
+                        {...this.props.videoSettings}
                       />
                       :
                       <Image
@@ -130,17 +130,18 @@ class PhotoGrid extends PureComponent {
                       (
                           isVideo(image) ?
                               <Video
-                                  source={typeof image === 'string' ? {uri: image} : image}
-                                  rate={1.0}
-                                  volume={1.0}
-                                  isMuted={true}
-                                  resizeMode="cover"
-                                  shouldPlay
-                                  isLooping
-                                  style={[styles.image, {
+                                source={typeof image === 'string' ? {uri: image} : image}
+                                rate={1.0}
+                                volume={1.0}
+                                isMuted={true}
+                                resizeMode="cover"
+                                shouldPlay
+                                isLooping
+                                style={[styles.image, {
                                     width: secondImageWidth,
                                     height: secondImageHeight
                                   }, this.props.imageStyle]}
+                                {...this.props.videoSettings}
                               />
                               :
 
@@ -161,17 +162,18 @@ class PhotoGrid extends PureComponent {
                       :
                       isVideo(image) ?
                           <Video
-                              source={typeof image === 'string' ? {uri: image} : image}
-                              rate={1.0}
-                              volume={1.0}
-                              isMuted={true}
-                              resizeMode="cover"
-                              shouldPlay
-                              isLooping
-                              style={[styles.image, {
+                            source={typeof image === 'string' ? {uri: image} : image}
+                            rate={1.0}
+                            volume={1.0}
+                            isMuted={true}
+                            resizeMode="cover"
+                            shouldPlay
+                            isLooping
+                            style={[styles.image, {
                                 width: secondImageWidth,
                                 height: secondImageHeight
                               }, this.props.imageStyle]}
+                            {...this.props.videoSettings}
                           />
                           :
                           <Image
