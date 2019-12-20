@@ -176,8 +176,8 @@ class PhotoGrid extends PureComponent {
                           :
                           <Image
                               style={[styles.image, {
-                                width: firstImageWidth,
-                                height: firstImageHeight
+                                width: secondImageWidth,
+                                height: secondImageHeight
                               }, this.props.imageStyle]}
                               // source={typeof image === 'string' ? { uri: image } : image}
                               defaultSource={this.props.emptyImage || emptyImg}
