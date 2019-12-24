@@ -1,10 +1,10 @@
-import React, { PureComponent } from 'react'
+import React, {PureComponent} from 'react'
 import PropTypes from 'prop-types'
-import { Dimensions, ImageBackground, Text, TouchableOpacity, View } from 'react-native'
+import {Dimensions, ImageBackground, Text, TouchableOpacity, View} from 'react-native'
 import _ from 'lodash'
-import { Image } from 'react-native-expo-image-cache'
+import {Image} from 'react-native-expo-image-cache'
 import emptyImg from './empty-image.png'
-import { Video } from "expo-av";
+import {Video} from "expo-av";
 
 const { width } = Dimensions.get('window')
 
@@ -111,14 +111,14 @@ class MediaGrid extends PureComponent {
               {
                 photosOnly && isPhotoType(image) && (
                   <Image
-                    style={[styles.image, {
+                      style={[styles.image, {
                       width: firstImageWidth,
                       height: firstImageHeight
                     }, this.props.imageStyle]}
                     // source={typeof image === 'string' ? { uri: image } : image}
-                    defaultSource={this.props.emptyImage || emptyImg}
-                    uri={typeof image === 'string' ? image : image.uri}
-                    {...imageProps}
+                      defaultSource={this.props.emptyImage || emptyImg}
+                      uri={typeof image === 'string' ? image : image.thumbnail ? image.thumbnail : image.uri}
+                      {...imageProps}
                   />
                 )
               }
@@ -156,11 +156,11 @@ class MediaGrid extends PureComponent {
                         :
 
                         <ImageBackground
-                          style={[styles.image, {
-                            width: secondImageWidth,
-                            height: secondImageHeight
-                          }, this.props.imageStyle]}
-                          source={typeof image === 'string' ? { uri: image } : image}
+                            style={[styles.image, {
+                              width: secondImageWidth,
+                              height: secondImageHeight
+                            }, this.props.imageStyle]}
+                            source={typeof image === 'string' ? {uri: image} : image.thumbnail ? image.thumbnail : image}
                         >
                           <View style={styles.lastWrapper}>
                             <Text
@@ -187,14 +187,14 @@ class MediaGrid extends PureComponent {
                       />
                       :
                       <Image
-                        style={[styles.image, {
+                          style={[styles.image, {
                           width: secondImageWidth,
                           height: secondImageHeight
                         }, this.props.imageStyle]}
                         // source={typeof image === 'string' ? { uri: image } : image}
-                        defaultSource={this.props.emptyImage || emptyImg}
-                        uri={typeof image === 'string' ? image : image.uri}
-                        {...imageProps}
+                          defaultSource={this.props.emptyImage || emptyImg}
+                          uri={typeof image === 'string' ? image : image.thumbnail ? image.thumbnail : image.uri}
+                          {...imageProps}
                       />
 
                   }
