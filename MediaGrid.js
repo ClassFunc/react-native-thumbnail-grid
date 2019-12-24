@@ -6,18 +6,24 @@ import {Image} from 'react-native-expo-image-cache'
 import emptyImg from './empty-image.png'
 import {Video} from "expo-av";
 
-const { width } = Dimensions.get('window')
+const {width} = Dimensions.get('window')
 
 const isVideo = (photo) => {
   return photo.mediaType === 'video'
-    || photo.type === 'video'
+      || photo.type === 'video'
 }
 const isPhotoType = (photo) => {
   return photo.mediaType === 'photo'
-    || photo.type === 'image'
-    || photo.type === 'photo'
+      || photo.type === 'image'
+      || photo.type === 'photo'
 }
-
+const getRefVideo = () => {
+  let result = []
+  for (let i = 0; i < 5; i++) {
+    result.push(React.createRef(null))
+  }
+  return result
+}
 class MediaGrid extends PureComponent {
   constructor(props) {
     super(props)
@@ -25,9 +31,18 @@ class MediaGrid extends PureComponent {
     this.state = {
       width: props.width,
       height: props.height,
+      initialStatus: {
+        shouldPlay: true,
+        rate: 1.0,
+        volume: 1.0,
+        isMuted: true,
+        isLooping: false,
+        progressUpdateIntervalMillis: 1000
+      }
     }
   }
 
+  videoRefs = getRefVideo()
   static defaultProps = {
     numberImagesToShow: 0,
     onPressImage: () => {
@@ -35,18 +50,82 @@ class MediaGrid extends PureComponent {
   }
 
   isLastImage = (index, secondViewImages) => {
-    const { source, numberImagesToShow } = this.props
+    const {source, numberImagesToShow} = this.props
 
     return (source.length > 5 || numberImagesToShow) && index === secondViewImages.length - 1
   }
 
-  handlePressImage = (event, { image, index }, secondViewImages) =>
-    this.props.onPressImage(event, image, {
-      isLastImage: index && this.isLastImage(index, secondViewImages),
+  handlePressImage = (event, {image, index}, secondViewImages) =>
+      this.props.onPressImage(event, image, {
+        isLastImage: index && this.isLastImage(index, secondViewImages),
+      })
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.playing !== this.props.playing) {
+      if (this.props.playing) {
+        const {source} = this.props
+        const files = _.take(source, 5)
+        this.videoRefs.forEach(async (ref, idx) => {
+          if (files[idx] && isVideo(files[idx])) {
+            if (ref && ref.current) {
+              try {
+                await ref.current.unloadAsync()
+              } catch (e) {
+                console.log(e);
+              }
+              try {
+                console.log('try load uri', idx, files[idx].uri)
+                const status = await ref.current.loadAsync({uri: files[idx].uri}, this.state.initialStatus)
+                console.log(status)
+              } catch (e) {
+                console.log(e);
+              }
+
+            }
+
+          } else {
+            if (ref && ref.current) {
+              try {
+                await ref.current.unloadAsync()
+              } catch (e) {
+
+              }
+            }
+          }
+        })
+      } else {
+        this.videoRefs.forEach(ref => {
+          if (ref && ref.current) {
+            try {
+              ref.current.unloadAsync()
+            } catch (e) {
+
+            }
+          }
+        })
+      }
+    }
+  }
+
+  _mountVideo = index => async (ref) => {
+    this.videoRefs[index].current = ref
+  }
+
+  componentWillUnmount() {
+    this.videoRefs.forEach(ref => {
+      if (ref && ref.current) {
+        try {
+          console.log('unmounted ')
+          ref.current.unloadAsync()
+        } catch (e) {
+
+        }
+      }
     })
+  }
 
   render() {
-    const { imageProps, photosOnly, source: _source } = this.props
+    const {imageProps, photosOnly, source: _source, playing, videoRefs} = this.props
     const photos = _source.filter(m => isPhotoType(m)) || []
     const source = _.take(photosOnly ? photos : _source, 5)
     const firstViewImages = []
@@ -64,7 +143,7 @@ class MediaGrid extends PureComponent {
       index++
     })
 
-    const { width, height } = this.props
+    const {width, height} = this.props
     let ratio = 0
     if (secondViewImages.length === 0) {
       ratio = 0
@@ -85,125 +164,134 @@ class MediaGrid extends PureComponent {
     const secondViewHeight = direction === 'column' ? (height * ratio) : height
 
     return source.length ? (
-      <View style={[{ flexDirection: direction, width, height }, this.props.styles]}>
-        <View style={{ flex: 1, flexDirection: direction === 'row' ? 'column' : 'row' }}>
-          {firstViewImages.map((image, index) => (
-            <TouchableOpacity activeOpacity={0.7} key={index} style={{ flex: 1 }}
-                              onPress={event => this.handlePressImage(event, { image })}>
-              {
-                !photosOnly && isVideo(image) && (
-                  <Video
-                    source={typeof image === 'string' ? { uri: image } : image}
-                    rate={1.0}
-                    volume={1.0}
-                    isMuted={true}
-                    resizeMode="cover"
-                    shouldPlay
-                    isLooping
-                    style={[styles.image, {
-                      width: firstImageWidth,
-                      height: firstImageHeight
-                    }, this.props.imageStyle]}
-                    {...this.props.videoSettings}
-                  />
-                )
-              }
-              {
-                photosOnly && isPhotoType(image) && (
-                  <Image
-                      style={[styles.image, {
-                      width: firstImageWidth,
-                      height: firstImageHeight
-                    }, this.props.imageStyle]}
-                    // source={typeof image === 'string' ? { uri: image } : image}
-                      defaultSource={this.props.emptyImage || emptyImg}
-                      uri={typeof image === 'string' ? image : image.thumbnail ? image.thumbnail : image.uri}
-                      {...imageProps}
-                  />
-                )
-              }
-
-            </TouchableOpacity>
-          ))}
-        </View>
-        {
-          secondViewImages.length ? (
-            <View style={{
-              width: secondViewWidth,
-              height: secondViewHeight,
-              flexDirection: direction === 'row' ? 'column' : 'row'
-            }}>
-              {secondViewImages.map((image, index) => (
-                <TouchableOpacity activeOpacity={0.7} key={index} style={{ flex: 1 }}
-                                  onPress={event => this.handlePressImage(event, { image, index }, secondViewImages)}>
-                  {this.isLastImage(index, secondViewImages) ?
-                    (
-                      isVideo(image) ?
-                        <Video
-                          source={typeof image === 'string' ? { uri: image } : image}
-                          rate={1.0}
-                          volume={1.0}
-                          isMuted={true}
-                          resizeMode="cover"
-                          shouldPlay
-                          isLooping
-                          style={[styles.image, {
-                            width: secondImageWidth,
-                            height: secondImageHeight
-                          }, this.props.imageStyle]}
-                          {...this.props.videoSettings}
-                        />
+        <View style={[{flexDirection: direction, width, height}, this.props.styles]}>
+          <View style={{flex: 1, flexDirection: direction === 'row' ? 'column' : 'row'}}>
+            {firstViewImages.map((image, index) => (
+                <TouchableOpacity activeOpacity={0.7} key={index} style={{flex: 1}}
+                                  onPress={event => this.handlePressImage(event, {image})}>
+                  {
+                    (!photosOnly && isVideo(image) && playing) ? (
+                            <Video
+                                // source={typeof image === 'string' ? { uri: image } : image}
+                                rate={1.0}
+                                volume={1.0}
+                                isMuted={true}
+                                resizeMode="cover"
+                                shouldPlay
+                                isLooping
+                                style={[styles.image, {
+                                  width: firstImageWidth,
+                                  height: firstImageHeight
+                                }, this.props.imageStyle]}
+                                onError={async error => {
+                                  console.log(error)
+                                }}
+                                {...this.props.videoSettings}
+                                ref={this._mountVideo(index)}
+                            />
+                        )
                         :
-
-                        <ImageBackground
+                        <Image
                             style={[styles.image, {
-                              width: secondImageWidth,
-                              height: secondImageHeight
+                              width: firstImageWidth,
+                              height: firstImageHeight
                             }, this.props.imageStyle]}
-                            source={typeof image === 'string' ? {uri: image} : image.thumbnail ? image.thumbnail : image}
-                        >
-                          <View style={styles.lastWrapper}>
-                            <Text
-                              style={[styles.textCount, this.props.textStyles]}>+{this.props.numberImagesToShow || this.props.source.length - 5}</Text>
-                          </View>
-                        </ImageBackground>
-
-                    )
-                    :
-                    isVideo(image) ?
-                      <Video
-                        source={typeof image === 'string' ? { uri: image } : image}
-                        rate={1.0}
-                        volume={1.0}
-                        isMuted={true}
-                        resizeMode="cover"
-                        shouldPlay
-                        isLooping
-                        style={[styles.image, {
-                          width: secondImageWidth,
-                          height: secondImageHeight
-                        }, this.props.imageStyle]}
-                        {...this.props.videoSettings}
-                      />
-                      :
-                      <Image
-                          style={[styles.image, {
-                          width: secondImageWidth,
-                          height: secondImageHeight
-                        }, this.props.imageStyle]}
-                        // source={typeof image === 'string' ? { uri: image } : image}
-                          defaultSource={this.props.emptyImage || emptyImg}
-                          uri={typeof image === 'string' ? image : image.thumbnail ? image.thumbnail : image.uri}
-                          {...imageProps}
-                      />
+                            // source={typeof image === 'string' ? { uri: image } : image}
+                            defaultSource={this.props.emptyImage || emptyImg}
+                            uri={typeof image === 'string' ? image : image.thumbnail ? image.thumbnail : image.uri}
+                            {...imageProps}
+                        />
 
                   }
+
                 </TouchableOpacity>
-              ))}
-            </View>
-          ) : null
-        }
-      </View>
+            ))}
+          </View>
+          {
+            secondViewImages.length ? (
+                <View style={{
+                  width: secondViewWidth,
+                  height: secondViewHeight,
+                  flexDirection: direction === 'row' ? 'column' : 'row'
+                }}>
+                  {secondViewImages.map((image, index) => (
+                      <TouchableOpacity activeOpacity={0.7} key={index} style={{flex: 1}}
+                                        onPress={event => this.handlePressImage(event, {
+                                          image,
+                                          index
+                                        }, secondViewImages)}>
+                        {this.isLastImage(index, secondViewImages) ?
+                            (
+                                // isVideo(image) ?
+                                //   <Video
+                                //     source={typeof image === 'string' ? { uri: image } : image}
+                                //     rate={1.0}
+                                //     volume={1.0}
+                                //     isMuted={true}
+                                //     resizeMode="cover"
+                                //     shouldPlay
+                                //     isLooping
+                                //     style={[styles.image, {
+                                //       width: secondImageWidth,
+                                //       height: secondImageHeight
+                                //     }, this.props.imageStyle]}
+                                //     {...this.props.videoSettings}
+                                //   />
+                                //   :
+
+                                <ImageBackground
+                                    style={[styles.image, {
+                                      width: secondImageWidth,
+                                      height: secondImageHeight
+                                    }, this.props.imageStyle]}
+                                    source={typeof image === 'string' ? {uri: image} : image.thumbnail ? image.thumbnail : image}
+                                >
+                                  <View style={styles.lastWrapper}>
+                                    <Text
+                                        style={[styles.textCount, this.props.textStyles]}>+{this.props.numberImagesToShow || this.props.source.length - 5}</Text>
+                                  </View>
+                                </ImageBackground>
+
+                            )
+                            :
+                            isVideo(image) && playing ?
+                                <Video
+                                    // source={typeof image === 'string' ? { uri: image } : image}
+                                    rate={1.0}
+                                    volume={1.0}
+                                    isMuted={true}
+                                    resizeMode="cover"
+                                    shouldPlay
+                                    isLooping
+                                    style={[styles.image, {
+                                      width: secondImageWidth,
+                                      height: secondImageHeight
+                                    }, this.props.imageStyle]}
+                                    {...this.props.videoSettings}
+                                    onError={async error => {
+                                      console.log(error)
+                                    }}
+                                    ref={this._mountVideo(firstViewImages.length + index)}
+                                />
+                                :
+                                <Image
+                                    style={[styles.image, {
+                                      width: secondImageWidth,
+                                      height: secondImageHeight
+                                    }, this.props.imageStyle]}
+                                    // source={typeof image === 'string' ? { uri: image } : image}
+                                    defaultSource={this.props.emptyImage || emptyImg}
+                                    uri={typeof image === 'string' ? image : image.thumbnail ? image.thumbnail : image.uri}
+                                    {...imageProps}
+                                />
+
+                        }
+                      </TouchableOpacity>
+                  ))}
+                </View>
+            ) : null
+          }
+        </View>
     ) : null
   }
 }
