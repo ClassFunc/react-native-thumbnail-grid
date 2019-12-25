@@ -5,6 +5,7 @@ import _ from 'lodash'
 import {Image} from 'react-native-expo-image-cache'
 import emptyImg from './empty-image.png'
 import {Video} from "expo-av";
+import loading from './loading.gif'
 
 const {width} = Dimensions.get('window')
 
@@ -179,6 +180,11 @@ class MediaGrid extends PureComponent {
                                 resizeMode="cover"
                                 shouldPlay
                                 isLooping
+                                posterSource={loading}
+                                posterStyle={{
+                                  width: firstImageWidth,
+                                  height: firstImageHeight
+                                }}
                                 style={[styles.image, {
                                   width: firstImageWidth,
                                   height: firstImageHeight
@@ -244,7 +250,7 @@ class MediaGrid extends PureComponent {
                                       width: secondImageWidth,
                                       height: secondImageHeight
                                     }, this.props.imageStyle]}
-                                    source={typeof image === 'string' ? {uri: image} : image.thumbnail ? image.thumbnail : image}
+                                    source={typeof image === 'string' ? {uri: image} : image.thumbnail ? {uri: image.thumbnail} : image}
                                 >
                                   <View style={styles.lastWrapper}>
                                     <Text
@@ -263,6 +269,11 @@ class MediaGrid extends PureComponent {
                                     resizeMode="cover"
                                     shouldPlay
                                     isLooping
+                                    posterSource={loading}
+                                    posterStyle={{
+                                      width: secondImageWidth,
+                                      height: secondImageHeight
+                                    }}
                                     style={[styles.image, {
                                       width: secondImageWidth,
                                       height: secondImageHeight
