@@ -4,8 +4,7 @@ import {Dimensions, ImageBackground, Text, TouchableOpacity, View} from 'react-n
 import _ from 'lodash'
 import {Image} from 'react-native-expo-image-cache'
 import emptyImg from './empty-image.png'
-import {Video} from "expo-av";
-import loading from './loading.gif'
+import VideoPlayer from "./VideoPlayer";
 
 const {width} = Dimensions.get('window')
 
@@ -18,13 +17,7 @@ const isPhotoType = (photo) => {
       || photo.type === 'image'
       || photo.type === 'photo'
 }
-const getRefVideo = () => {
-  let result = []
-  for (let i = 0; i < 5; i++) {
-    result.push(React.createRef(null))
-  }
-  return result
-}
+
 class MediaGrid extends PureComponent {
   constructor(props) {
     super(props)
@@ -36,14 +29,15 @@ class MediaGrid extends PureComponent {
         shouldPlay: true,
         rate: 1.0,
         volume: 1.0,
-        isMuted: true,
-        isLooping: false,
-        progressUpdateIntervalMillis: 1000
+        isMuted: false,
+        isLooping: true,
+        progressUpdateIntervalMillis: 1000,
+
       }
     }
+
   }
 
-  videoRefs = getRefVideo()
   static defaultProps = {
     numberImagesToShow: 0,
     onPressImage: () => {
@@ -61,72 +55,9 @@ class MediaGrid extends PureComponent {
         isLastImage: index && this.isLastImage(index, secondViewImages),
       })
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.playing !== this.props.playing) {
-      if (this.props.playing) {
-        const {source} = this.props
-        const files = _.take(source, 5)
-        this.videoRefs.forEach(async (ref, idx) => {
-          if (files[idx] && isVideo(files[idx])) {
-            if (ref && ref.current) {
-              try {
-                await ref.current.unloadAsync()
-              } catch (e) {
-                console.log(e);
-              }
-              try {
-                console.log('try load uri', idx, files[idx].uri)
-                const status = await ref.current.loadAsync({uri: files[idx].uri}, this.state.initialStatus)
-                console.log(status)
-              } catch (e) {
-                console.log(e);
-              }
-
-            }
-
-          } else {
-            if (ref && ref.current) {
-              try {
-                await ref.current.unloadAsync()
-              } catch (e) {
-
-              }
-            }
-          }
-        })
-      } else {
-        this.videoRefs.forEach(ref => {
-          if (ref && ref.current) {
-            try {
-              ref.current.unloadAsync()
-            } catch (e) {
-
-            }
-          }
-        })
-      }
-    }
-  }
-
-  _mountVideo = index => async (ref) => {
-    this.videoRefs[index].current = ref
-  }
-
-  componentWillUnmount() {
-    this.videoRefs.forEach(ref => {
-      if (ref && ref.current) {
-        try {
-          console.log('unmounted ')
-          ref.current.unloadAsync()
-        } catch (e) {
-
-        }
-      }
-    })
-  }
 
   render() {
-    const {imageProps, photosOnly, source: _source, playing, videoRefs} = this.props
+    const {imageProps, photosOnly, source: _source, playing} = this.props
     const photos = _source.filter(m => isPhotoType(m)) || []
     const source = _.take(photosOnly ? photos : _source, 5)
     const firstViewImages = []
@@ -171,29 +102,14 @@ class MediaGrid extends PureComponent {
                 <TouchableOpacity activeOpacity={0.7} key={index} style={{flex: 1}}
                                   onPress={event => this.handlePressImage(event, {image})}>
                   {
-                    (!photosOnly && isVideo(image) && playing) ? (
-                            <Video
-                                // source={typeof image === 'string' ? { uri: image } : image}
-                                rate={1.0}
-                                volume={1.0}
-                                isMuted={true}
-                                resizeMode="cover"
-                                shouldPlay
-                                isLooping
-                                posterSource={loading}
-                                posterStyle={{
-                                  width: firstImageWidth,
-                                  height: firstImageHeight
-                                }}
-                                style={[styles.image, {
+                    (isVideo(image)) && playing ? (
+                            <VideoPlayer
+                                video={image}
+                                styles={[styles.image, {
                                   width: firstImageWidth,
                                   height: firstImageHeight
                                 }, this.props.imageStyle]}
-                                onError={async error => {
-                                  console.log(error)
-                                }}
-                                {...this.props.videoSettings}
-                                ref={this._mountVideo(index)}
+                                videoSettings={this.props.videoSettings}
                             />
                         )
                         :
@@ -261,28 +177,13 @@ class MediaGrid extends PureComponent {
                             )
                             :
                             isVideo(image) && playing ?
-                                <Video
-                                    // source={typeof image === 'string' ? { uri: image } : image}
-                                    rate={1.0}
-                                    volume={1.0}
-                                    isMuted={true}
-                                    resizeMode="cover"
-                                    shouldPlay
-                                    isLooping
-                                    posterSource={loading}
-                                    posterStyle={{
-                                      width: secondImageWidth,
-                                      height: secondImageHeight
-                                    }}
-                                    style={[styles.image, {
+                                <VideoPlayer
+                                    video={image}
+                                    styles={[styles.image, {
                                       width: secondImageWidth,
                                       height: secondImageHeight
                                     }, this.props.imageStyle]}
-                                    {...this.props.videoSettings}
-                                    onError={async error => {
-                                      console.log(error)
-                                    }}
-                                    ref={this._mountVideo(firstViewImages.length + index)}
+                                    videoSettings={this.props.videoSettings}
                                 />
                                 :
                                 <Image
@@ -307,7 +208,8 @@ class MediaGrid extends PureComponent {
   }
 }
 
-MediaGrid.prototypes = {
+MediaGrid
+    .prototypes = {
   source: PropTypes.array.isRequired,
   width: PropTypes.number,
   height: PropTypes.number,
@@ -318,7 +220,8 @@ MediaGrid.prototypes = {
   imageProps: PropTypes.object
 }
 
-MediaGrid.defaultProps = {
+MediaGrid
+    .defaultProps = {
   style: {},
   imageStyle: {},
   imageProps: {},
@@ -327,22 +230,23 @@ MediaGrid.defaultProps = {
   ratio: 1 / 3
 }
 
-const styles = {
-  image: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#fff'
-  },
-  lastWrapper: {
-    flex: 1,
-    backgroundColor: 'rgba(200, 200, 200, .5)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  textCount: {
-    color: '#fff',
-    fontSize: 60
-  }
-}
+const
+    styles = {
+      image: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#fff'
+      },
+      lastWrapper: {
+        flex: 1,
+        backgroundColor: 'rgba(200, 200, 200, .5)',
+        justifyContent: 'center',
+        alignItems: 'center'
+      },
+      textCount: {
+        color: '#fff',
+        fontSize: 60
+      }
+    }
 
 export default MediaGrid
