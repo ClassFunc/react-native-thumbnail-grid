@@ -4,7 +4,7 @@ import {Dimensions, ImageBackground, Text, TouchableOpacity, View} from 'react-n
 import _ from 'lodash'
 import {Image} from 'react-native-expo-image-cache'
 import emptyImg from './empty-image.png'
-import VideoPlayer from "./VideoPlayer";
+import VideoRender from "./VideoRender";
 
 const {width} = Dimensions.get('window')
 
@@ -64,13 +64,32 @@ class MediaGrid extends PureComponent {
     const secondViewImages = []
     const firstItemCount = source.length === 5 ? 2 : 1
     let index = 0
+    let videoPlay = false
+
     _.each(source, (img, callback) => {
       if (index === 0) {
-        firstViewImages.push(img)
+        if (isVideo(img) && !videoPlay) {
+          videoPlay = true
+          firstViewImages.push({...img, videoPlay: true})
+        } else {
+          firstViewImages.push(img)
+        }
+
       } else if (index === 1 && firstItemCount === 2) {
-        firstViewImages.push(img)
+        if (isVideo(img) && !videoPlay) {
+          videoPlay = true
+          firstViewImages.push({...img, videoPlay: true})
+        } else {
+          firstViewImages.push(img)
+        }
+
       } else {
-        secondViewImages.push(img)
+        if (isVideo(img) && !videoPlay) {
+          videoPlay = true
+          secondViewImages.push({...img, videoPlay: true})
+        } else {
+          secondViewImages.push(img)
+        }
       }
       index++
     })
@@ -102,14 +121,18 @@ class MediaGrid extends PureComponent {
                 <TouchableOpacity activeOpacity={0.7} key={index} style={{flex: 1}}
                                   onPress={event => this.handlePressImage(event, {image})}>
                   {
-                    (isVideo(image)) && playing ? (
-                            <VideoPlayer
+                    (isVideo(image)) ? (
+                            <VideoRender
                                 video={image}
+                                width={firstImageWidth}
+                                height={firstImageHeight}
                                 styles={[styles.image, {
                                   width: firstImageWidth,
                                   height: firstImageHeight
                                 }, this.props.imageStyle]}
                                 videoSettings={this.props.videoSettings}
+                                videoPlay={image.videoPlay}
+                                playing={playing}
                             />
                         )
                         :
@@ -177,13 +200,18 @@ class MediaGrid extends PureComponent {
                             )
                             :
                             isVideo(image) && playing ?
-                                <VideoPlayer
+                                <VideoRender
                                     video={image}
+                                    width={secondImageWidth}
+                                    height={secondImageHeight}
                                     styles={[styles.image, {
                                       width: secondImageWidth,
                                       height: secondImageHeight
                                     }, this.props.imageStyle]}
                                     videoSettings={this.props.videoSettings}
+                                    videoPlay={image.videoPlay}
+                                    playing={playing}
+                                    fixSize={(source.length === 2 || source.length === 3) ? 2 : 1}
                                 />
                                 :
                                 <Image
